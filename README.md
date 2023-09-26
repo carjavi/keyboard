@@ -153,7 +153,7 @@ readInput();
 ### Modulo para lectura de cadenas desde el teclado
 keyboardInput.js
 ```
- const readline = require('readline');
+const readline = require('readline');
 
 function readKeyboardInput(callback) {
   const rl = readline.createInterface({
@@ -161,23 +161,9 @@ function readKeyboardInput(callback) {
     output: process.stdout
   });
 
-  function readInput() {
-    rl.question('Ingresa una palabra: ', (answer) => {
-      if (answer.toLowerCase() === 'exit') {
-        console.log('Saliendo de la aplicación...');
-        rl.close();
-      } else {
-        console.log('Palabra ingresada:', answer);
-        readInput();
-      }
-    });
-  }
-
-  console.log('Ingresa "exit" para cerrar la aplicación.');
-  readInput();
-
-  rl.on('close', () => {
-    callback();
+  rl.question('Ingresa una palabra: ', (answer) => {
+    rl.close();
+    callback(answer);
   });
 }
 
@@ -189,12 +175,31 @@ main.js
 ```
 const { readKeyboardInput } = require('./keyboardInput');
 
-function onExit() {
-  console.log('La aplicación ha sido cerrada.');
-  process.exit(0);  // Salir de la aplicación
+function startApp() {
+  let shouldExit = false;
+
+  function handleInput(answer) {
+    const lowerCaseAnswer = answer.toLowerCase();
+    if (lowerCaseAnswer === 'exit') {
+      console.log('Saliendo de la aplicación...');
+      shouldExit = true;
+    } else if (lowerCaseAnswer === 'perro' || lowerCaseAnswer === 'gato' || lowerCaseAnswer === 'raton') {
+      console.log('Has ingresado un animal:', answer);
+    } else {
+      console.log('Palabra ingresada:', answer);
+    }
+
+    if (!shouldExit) {
+      console.log('Ingresa "exit" para salir.');
+      readKeyboardInput(handleInput);
+    }
+  }
+
+  console.log('La aplicación está en un bucle infinito. Ingresa "exit" para salir.');
+  readKeyboardInput(handleInput);
 }
 
-readKeyboardInput(onExit);
+startApp();
 ```
 
 <br>
@@ -208,7 +213,7 @@ example: node app.js one two three
 
 app.js
 ```
-var args = process.argv.slice(2);
+var argv = process.argv.slice(2);
 var program_name = process.argv[0]; //value will be "node"
 var script_path = process.argv[1]; //value will be "yourscript.js"
 var first_value = process.argv[2]; //value will be "first_value"
@@ -222,10 +227,10 @@ console.log("second argument: ", second_value);
 Ejemplo mostrando todo el array
 ```
 const args = process.argv;
-var program_name = process.argv[0]; //value will be "node"
-var script_path = process.argv[1]; //value will be "yourscript.js"
-var first_value = process.argv[2]; //value will be "first_value"
-var second_value = process.argv[3]; //value will be "second_value"
+var program_name = process.args[0]; //value will be "node"
+var script_path = process.args[1]; //value will be "yourscript.js"
+var first_value = process.args[2]; //value will be "first_value"
+var second_value = process.args[3]; //value will be "second_value"
 console.log("All args: ", args );
 console.log("second argument: ", second_value);
 ```
@@ -242,7 +247,59 @@ console.log("All args: ", argv );
 console.log("z args: ", argv.z );
 
 ```
+<br>
 
+## Buscar comandos en un archivo JSON, usando el argumento como palabra de busqueda
+Example: node app.js ls / node app.js mkdir <br>
+
+data.json
+```
+{
+    "ls": "enumera el contenido del directorio que desee, archivos y otros directorios anidados.",
+    "pwd": "confirmar en qué directorio se está trabajando actualmente.",
+    "mkdir": " permite crear una o más carpetas en tu directorio de trabajo actual.",
+    "rm": "eliminar archivo."
+}
+```
+
+app.js
+```
+var value = process.argv[2];
+
+
+const fs = require('fs');
+
+// Ruta al archivo JSON
+const filePath = 'data.json';
+
+//console.log(value);
+
+// Palabra que queremos buscar
+const targetWord = value;
+
+// Lee el archivo JSON
+fs.readFile(filePath, 'utf8', (err, data) => {
+  if (err) {
+    console.error('Error al leer el archivo JSON:', err);
+    return;
+  }
+
+  try {
+    // Convierte el contenido del archivo a un objeto JavaScript
+    const jsonData = JSON.parse(data);
+
+    // Itera sobre las propiedades (claves) del objeto
+    for (const key in jsonData) {
+      if (key === targetWord) {
+        console.log(`comando: '${key}': ${jsonData[key]}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error al analizar el contenido JSON:', error);
+  }
+});
+
+```
 
 <br>
 
